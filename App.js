@@ -9,9 +9,10 @@ import {
   View,
   ActivityIndicator,
   TextInput,
-  TouchableOpacity
+  TouchableOpacity,
+  Modal,
+  Alert
 } from 'react-native';
-
 
 const App = () => {
   const [data, setData] = useState([])
@@ -24,63 +25,113 @@ const App = () => {
   const [nuas, setNuas] = useState(0)
   const [isloading, setIsLoading] = useState(true)
   const [isloading1, setIsLoading1] = useState(false)
+  const [modalVisible, setModalVisible] = useState(false);
+
 
   useEffect(()=> {
-
-    var requestOptions = {
-      method: 'GET',
-      redirect: 'follow'
-    };
-
-    fetch("http://koperasi.crossnet.co.id:9999/api/v1/all_mahasiswa", requestOptions)
-      .then(response => response.json())
-      .then(result => {
-        console.log(result)
-        setIsLoading(false)
-        setData(result.data)
-      })
-      .catch(error => console.log('error', error));
+    getData()
+    
       },[])
+
+      const getData = () => {
+        var requestOptions = {
+          method: 'GET',
+          redirect: 'follow'
+        };
+    
+        fetch("http://koperasi.crossnet.co.id:9999/api/v1/all_mahasiswa", requestOptions)
+          .then(response => response.json())
+          .then(result => {
+            console.log(result)
+            setIsLoading(false)
+            setData(result.data)
+          })
+          .catch(error => console.log('error', error));
+      }
 
       const renderData = () => {
         return data.map((value, index) => (
-          <View key={index}>
-            <Text>{value.npm}</Text>
+          <View key={index} style={{marginTop:10, borderBottomColor:"#aeaeae", borderBottomWidth:1, marginBottom:5}}>
+          <View  style={{width:"90%", height:200,flexDirection:"row", flexWrap:"wrap",}}>
+          <View style={{width:"50%", height:20,  marginBottom:10, marginTop:10}}>
+              <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>NPM</Text>
+              <Text>{value.npm}</Text>
           </View>
+            <View style={{width:"50%", height:20,  marginBottom:10,marginTop:10}}>
+              <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>Nama</Text>
+              <Text>{value.nama}</Text>
+            </View>
+            <View style={{width:"50%", height:20,  marginBottom:10,marginTop:10}}>
+              <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>Mata Kuliah</Text>
+              <Text>{value.nm_mk}</Text>
+            </View>
+            <View style={{width:"50%", height:20,  marginBottom:10,marginTop:10}}>
+              <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>Nilai Tugas</Text>
+              <Text>{value.ntugas}</Text>
+            </View>
+            <View style={{width:"50%", height:20,  marginBottom:10,marginTop:10}}>
+              <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>Nilai Quiz</Text>
+              <Text>{value.nquiz}</Text>
+            </View>
+            <View style={{width:"50%", height:20,  marginBottom:10,marginTop:10}}>
+              <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>Nilai UTS</Text>
+              <Text>{value.nuts}</Text>
+            </View>
+            <View style={{width:"50%", height:20,  marginBottom:10,marginTop:10}}>
+              <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>Nilai UAS</Text>
+              <Text>{value.nuas}</Text>
+            </View>
+            <View style={{width:"50%", height:20,marginTop:10}}>
+              <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>Total Nilai(mean)</Text>
+              <Text>{value.total}({value.total>=81 ? "A" : value.total>=71 ? "B" :value.total>=61 ? "C" : "D"})</Text>
+            </View>
+          </View>
+          <View style={{width:"100%",alignItems:"center"}}>
+          <TouchableOpacity onPress={() => deletedata(value.id)} style={{width:"90%", height:40, backgroundColor:"#aeaeae", alignItems:"center", justifyContent:"center", marginBottom:10, borderRadius:20}}>
+              <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>Hapus</Text>
+            </TouchableOpacity>
+          </View>
+
+          </View>
+
         ))
       }
 
 
       const simpan = () => {
         setIsLoading1(true)
-        console.log(nuas.length==0)
+        console.log(typeof nuas)
 
         if(npm.length>0||nama.length>0||nmmk.length>0||ntugas.length>0||nquiz.length>0||nuts.length>0||nuas.length){
           fetch("http://koperasi.crossnet.co.id:9999/api/v1/add_mahasiswa", {
             method: 'POST',
             headers: {
-                Accept: 'application/json',
+                'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              "npm":npm,
-              "nama":nama,
-              "nm_mk":nmmk,
-              "ntugas": ntugas,
-              "nquiz":nquiz,
-              "nuts":nuts,
-              "nuas":nuas
+              npm:npm,
+              nama:nama,
+              nm_mk:nmmk,
+              ntugas: parseFloat(ntugas),
+              nquiz:parseFloat(nquiz),
+              nuts:parseFloat(nuts),
+              nuas:parseFloat(nuas)
           }),
           })
         .then(response => response.json())
         .then(result => {
           console.log(result)
-          setIsLoading1(false)
-          renderData()
+          getData()
+          setTimeout(() => {
+            setIsLoading1(false)
+            setModalVisible(!modalVisible)
+          }, 3000);
         })
         .catch(err => {
           console.log(err)
           setIsLoading1(false)
+          setModalVisible(!modalVisible)
         })
         }else{
           alert("Tidak boleh ada yang kosong")
@@ -88,15 +139,48 @@ const App = () => {
     }
       }
 
+      const deletedata = (id) => {
+        setIsLoading1(true)
+
+          fetch("http://koperasi.crossnet.co.id:9999/api/v1/delete_mahasiswa/"+id, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+          })
+        .then(response => response.json())
+        .then(result => {
+          console.log(result)
+          getData()
+          setTimeout(() => {
+            setIsLoading1(false)
+          }, 3000);
+        })
+        .catch(err => {
+          console.log(err)
+          setIsLoading1(false)
+        })
+      }
 
   return (
-    <SafeAreaView>
+    <SafeAreaView style={{flex:1}}>
       <StatusBar barStyle={ 'light-content'} />
-      <View style={{height:"55%", margin: 5, marginRight: 20, marginLeft: 20, alignItems:'center'}}>
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={{flex:1}}>
+          <View >
+          <View style={{height:"35%", alignItems:'center', }}>
         <Text style={{fontSize: 25, fontWeight:"bold", color:"black"}}>Data Nilai Mahasiswa</Text>
-        <View style={{width:"100%", flexDirection:"row", flexWrap:"wrap"}}>
+        <View style={{width:"90%", flexDirection:"row", flexWrap:"wrap", marginTop:10}}>
         <View style={{width:"50%", height:60, borderBottomWidth:1, borderBottomColor:"#aeaeae", marginBottom:10}}>
-          <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>NPM{nama.length}</Text>
+          <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>NPM</Text>
           <TextInput 
           placeholder='Masukan NPM'
           onChangeText={(value) => setNpm(value)}
@@ -155,17 +239,50 @@ const App = () => {
         </TouchableOpacity>
         }
         </View>
+        <TouchableOpacity
+             style={{height: 50, width:"90%", backgroundColor:"#aeaeae", justifyContent:"center", alignItems:"center", borderRadius:20}}
+              onPress={() => setModalVisible(!modalVisible)}
+            >
+              <Text style={{fontSize:20, color:"black", fontWeight:"bold"}}>Cancel</Text>
+            </TouchableOpacity>
       </View>
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={{backgroundColor:"light-content"}}>
-        <View style={{flex:1}}>
-          { isloading==true ? <ActivityIndicator/> :
-          <View style={{marginLeft: 20, marginRight: 20}}>
-          {renderData()}
-            </View>}
+          </View>
         </View>
-      </ScrollView>
+      </Modal>
+      <Text style={{fontSize: 25, fontWeight:"bold", color:"black", textAlign:"center"}}>Data Nilai Mahasiswa</Text>
+      <View style={{width:"100%", alignItems:"center"}}>
+      <TouchableOpacity
+              style={{height: 50, width:"90%", backgroundColor:"#aeaeae", justifyContent:"center", alignItems:"center", borderRadius:20}}
+              onPress={() => setModalVisible(!modalVisible)}
+              >
+              <Text style={{fontSize:20, color:"black", fontWeight:"bold"}}>Tambah Data Nilai Mahasiswa</Text>
+            </TouchableOpacity>
+            </View>
+            <View style={{width:"90%", alignItems:"center"}}>
+            <View style={{width:"90%", }}>
+            <Text>Keterangan:</Text>
+            <View style={{width:"100%", flexDirection:"row", flexWrap:"wrap"}}> 
+              <View style={{width:"50%"}}>
+                <Text>A 100 - 81: Sangat Baik</Text>
+              </View>
+              <View style={{width:"50%"}}>
+                <Text>B 80 - 71: Baik</Text>
+              </View>
+              <View style={{width:"50%"}}>
+                <Text>C 70 - 61: Cukup</Text>
+              </View>
+              <View style={{width:"50%"}}>
+                <Text>D Dibawah 60: Kurang</Text>
+              </View>
+            </View>
+            </View>
+            </View>
+          { isloading==true ? <ActivityIndicator/> :
+          <View style={{marginLeft: 20, marginRight: 20, flex:1}}>
+        <ScrollView>
+          {renderData()}
+        </ScrollView>
+            </View>}
     </SafeAreaView>
   );
 };
