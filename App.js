@@ -23,6 +23,7 @@ const App = () => {
   const [nuts, setNuts] = useState(0)
   const [nuas, setNuas] = useState(0)
   const [isloading, setIsLoading] = useState(true)
+  const [isloading1, setIsLoading1] = useState(false)
 
   useEffect(()=> {
 
@@ -39,7 +40,7 @@ const App = () => {
         setData(result.data)
       })
       .catch(error => console.log('error', error));
-      })
+      },[])
 
       const renderData = () => {
         return data.map((value, index) => (
@@ -48,6 +49,46 @@ const App = () => {
           </View>
         ))
       }
+
+
+      const simpan = () => {
+        setIsLoading1(true)
+        console.log(nuas.length==0)
+
+        if(npm.length>0||nama.length>0||nmmk.length>0||ntugas.length>0||nquiz.length>0||nuts.length>0||nuas.length){
+          fetch("http://koperasi.crossnet.co.id:9999/api/v1/add_mahasiswa", {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              "npm":npm,
+              "nama":nama,
+              "nm_mk":nmmk,
+              "ntugas": ntugas,
+              "nquiz":nquiz,
+              "nuts":nuts,
+              "nuas":nuas
+          }),
+          })
+        .then(response => response.json())
+        .then(result => {
+          console.log(result)
+          setIsLoading1(false)
+          renderData()
+        })
+        .catch(err => {
+          console.log(err)
+          setIsLoading1(false)
+        })
+        }else{
+          alert("Tidak boleh ada yang kosong")
+          setIsLoading1(false)
+    }
+      }
+
+
   return (
     <SafeAreaView>
       <StatusBar barStyle={ 'light-content'} />
@@ -55,7 +96,7 @@ const App = () => {
         <Text style={{fontSize: 25, fontWeight:"bold", color:"black"}}>Data Nilai Mahasiswa</Text>
         <View style={{width:"100%", flexDirection:"row", flexWrap:"wrap"}}>
         <View style={{width:"50%", height:60, borderBottomWidth:1, borderBottomColor:"#aeaeae", marginBottom:10}}>
-          <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>NPM</Text>
+          <Text style={{fontSize: 14, color:"#000", fontWeight:"bold"}}>NPM{nama.length}</Text>
           <TextInput 
           placeholder='Masukan NPM'
           onChangeText={(value) => setNpm(value)}
@@ -104,11 +145,16 @@ const App = () => {
           onChangeText={(value) => setNuas(value)}
           />
         </View>
-        <TouchableOpacity style={{width:"50%", height:60,  marginBottom:10, height:60, backgroundColor:"#4542", alignItems:"center", justifyContent:"center", borderRadius:20}}>
+        {isloading1 == true ?
+        <View style={{width:"50%", height:60,  marginBottom:10, height:60, backgroundColor:"#4542", alignItems:"center", justifyContent:"center", borderRadius:20}}>
+          <ActivityIndicator size={"large"}/>
+        </View>
+        :
+        <TouchableOpacity onPress={() => simpan()} style={{width:"50%", height:60,  marginBottom:10, height:60, backgroundColor:"#4542", alignItems:"center", justifyContent:"center", borderRadius:20}}>
           <Text style={{fontSize: 18, color:"red", fontWeight:"bold"}}> Simpan Data</Text>
         </TouchableOpacity>
+        }
         </View>
-       
       </View>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
